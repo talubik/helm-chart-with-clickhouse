@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-clickhouse
+  labels:
+    app: clickhouse
+spec:
+  replicas: 1 # Single-инсталляция
+  selector:
+    matchLabels:
+      app: clickhouse
+  template:
+    metadata:
+      labels:
+        app: clickhouse
+    spec:
+      containers:
+        - name: clickhouse
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.httpPort }}
+            - name: tcp
+              containerPort: {{ .Values.service.tcpPort }}
+          env:
+            {{- /* Динамически создаем переменные окружения для паролей */}}
+            {{- range .Values.clickhouse.users }}
+            - name: CLICKHOUSE_USER_{{ .name | upper }}_PASSWORD_SHA256
+              value: "{{ .password | sha256sum }}"
+            {{- end }}
+          volumeMounts:
+            - name: users-config
+              # Монтируем конфигурацию пользователей в нужный каталог
+              mountPath: /etc/clickhouse-server/users.d/generated-users.xml
+              subPath: users.xml
+      volumes:
+        - name: users-config
+          configMap:
+            # Используем ConfigMap, который мы создали для пользователей
+            name: {{ .Release.Name }}-clickhouse-users

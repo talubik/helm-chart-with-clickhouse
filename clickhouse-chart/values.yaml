@@ -1,0 +1,20 @@
+# -- Параметры образа ClickHouse
+image:
+  repository: clickhouse/clickhouse-server
+  tag: "24.3"
+  pullPolicy: IfNotPresent
+
+# -- Конфигурация ClickHouse
+clickhouse:
+  # -- Список пользователей и их паролей.
+  users:
+    - name: user1
+      password: password1
+    - name: user2
+      password: password2
+
+# -- Параметры Service для доступа к ClickHouse
+service:
+  type: ClusterIP
+  httpPort: 8123
+  tcpPort: 9000

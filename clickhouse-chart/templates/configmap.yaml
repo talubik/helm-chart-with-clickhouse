@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-clickhouse-users
+  labels:
+    app: clickhouse
+data:
+  # Имя файла, который будет создан внутри ConfigMap
+  users.xml: |
+    <yandex>
+      <users>
+        {{- /* Цикл по списку пользователей из values.yaml */}}
+        {{- range .Values.clickhouse.users }}
+        <{{ .name }}>
+          <profile>default</profile>
+          <networks>
+            <ip>::/0</ip>
+          </networks>
+          <!-- Пароль будет браться из переменной окружения -->
+          <password_sha256_hex from_env="CLICKHOUSE_USER_{{ .name | upper }}_PASSWORD_SHA256" />
+          <quota>default</quota>
+        </{{ .name }}>
+        {{- end }}
+      </users>
+    </yandex>
